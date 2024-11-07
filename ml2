@@ -1,0 +1,72 @@
+Naïve Bayes is a probabilistic classifier well-suited to problems where we assume that features are independent, which can work as a first attempt for credit card fraud detection. Given that fraud detection is often an imbalanced classification problem, handling the imbalance in your dataset is crucial. Here’s how you might approach it:
+
+Step-by-Step Guide
+Import Libraries
+
+python
+Copy code
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils import resample
+Load and Preprocess Data Load your data, which should ideally have features related to the transaction (e.g., amount, location, time) and a target label (0 = not fraud, 1 = fraud).
+
+python
+Copy code
+data = pd.read_csv('creditcard.csv')  # Replace with your dataset path
+Handle Class Imbalance (if needed) If your dataset is imbalanced, consider resampling.
+
+python
+Copy code
+fraud = data[data['Class'] == 1]
+not_fraud = data[data['Class'] == 0]
+
+# Upsample fraud or downsample not_fraud
+fraud_upsampled = resample(fraud, 
+                           replace=True,  # sample with replacement
+                           n_samples=len(not_fraud),  # match number in majority class
+                           random_state=42)
+
+# Combine majority and upsampled minority
+balanced_data = pd.concat([not_fraud, fraud_upsampled])
+Feature Scaling Since Naïve Bayes assumes Gaussian distribution, it helps to scale features.
+
+python
+Copy code
+scaler = StandardScaler()
+X = balanced_data.drop('Class', axis=1)
+y = balanced_data['Class']
+X = scaler.fit_transform(X)
+Train-Test Split Split the data into training and testing sets.
+
+python
+Copy code
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+Train Naïve Bayes Model Using Gaussian Naïve Bayes since credit card transactions may follow a Gaussian distribution after scaling.
+
+python
+Copy code
+model = GaussianNB()
+model.fit(X_train, y_train)
+Evaluate the Model Make predictions and evaluate the performance.
+
+python
+Copy code
+y_pred = model.predict(X_test)
+
+# Accuracy
+print("Accuracy:", accuracy_score(y_test, y_pred))
+
+# Classification Report
+print("Classification Report:\n", classification_report(y_test, y_pred))
+
+# Confusion Matrix
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+Important Considerations
+Handling Data Imbalance: In fraud detection, data imbalance is common since fraudulent transactions are rare. Over- or under-sampling, or using techniques like SMOTE, can help balance the data.
+Feature Selection: Some features may not be independent. Naïve Bayes assumes independence, which might not fully represent real-world interactions in fraud detection.
+Additional Models: For better performance, consider using other algorithms (e.g., Random Forests, Logistic Regression) or even ensemble models that generally perform better on complex datasets.
+This should give you a baseline model for detecting credit card fraud. While Naïve Bayes may work for a basic implementation, more complex models often provide higher accuracy and are better suited for production environments in fraud detection.
